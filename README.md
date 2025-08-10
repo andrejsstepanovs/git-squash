@@ -1,4 +1,34 @@
-# git squash
+# git-squash
 
-cli tool that is squashing multiple last branches into one
+A simple CLI tool to squash multiple Git commits into a single commit.
 
+## Screenshot
+
+![git-squash demo](./screenshot.png)
+
+## Installation
+
+```bash
+go install github.com/andrejsstepanovs/git-squash@latest
+````
+
+## Usage
+
+```bash
+# Interactive mode
+git-squash
+
+# Specify commit hash and message directly
+git-squash -a <commit-hash> -m "New squashed commit message"
+```
+
+**Options:**
+
+* `-a, --hash` – Optional commit hash to squash from
+* `-m, --message` – Optional commit message for the squashed commit
+
+## How it works
+
+1. Lists squashable commits (not pushed yet).
+2. Lets you select the starting commit interactively (or via `--hash`).
+3. Performs a `git reset --soft` and commits the changes with your message.
