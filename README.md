@@ -2,11 +2,15 @@
 
 A simple CLI tool to squash multiple Git commits into a single commit.
 
-## Screenshot
+## Demo
 
-![git-squash demo](./screenshot.png)
+![git-squash demo](./demo/video.gif)
 
 ## Installation
+
+[Download pre-compiled binary](https://github.com/andrejsstepanovs/git-squash/tags) or
+
+### Install with go
 
 ```bash
 go install github.com/andrejsstepanovs/git-squash@latest
