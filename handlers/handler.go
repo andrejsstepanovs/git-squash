@@ -47,7 +47,7 @@ func MainHandler(ctx context.Context, selectedCommit, commitMessage string) erro
 		return err
 	}
 
-	commitMessage, err = h.handleCommitMessage(commitMessage)
+	commitMessage, err = h.handleCommitMessage(commitMessage, selectedCommit, commits)
 	if err != nil {
 		return err
 	}
@@ -210,25 +210,6 @@ func clearLines(n int) {
 	for i := 0; i < n; i++ {
 		fmt.Print("\033[1A\033[K")
 	}
-}
-
-func readLine() (string, error) {
-	if !term.IsTerminal(int(os.Stdin.Fd())) {
-		return "", fmt.Errorf("pipe not supported")
-	}
-
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		return "", fmt.Errorf("failed setting stdin to raw mode: %w", err)
-	}
-	tty := term.NewTerminal(os.Stdin, "")
-	line, err := tty.ReadLine()
-	_ = term.Restore(int(os.Stdin.Fd()), oldState)
-
-	if err != nil {
-		return "", fmt.Errorf("failed to read from stdin: %w", err)
-	}
-	return line, nil
 }
 
 func containsCommit(commits []exec.GitCommit, search string) (bool, int) {

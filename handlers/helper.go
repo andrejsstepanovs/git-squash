@@ -1,11 +1,14 @@
 package handlers
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/andrejsstepanovs/git-squash/exec"
+	"github.com/c-bata/go-prompt"
 	"github.com/fatih/color"
 )
 
@@ -58,14 +61,38 @@ func (h *handler) validateSelectedCommit(ctx context.Context, commits []exec.Git
 	return count, nil
 }
 
-func (h *handler) handleCommitMessage(commitMessage string) (string, error) {
+func (h *handler) handleCommitMessage(commitMessage string, selectedCommitHash string, commits []exec.GitCommit) (string, error) {
 	if commitMessage == "" {
-		var err error
-		// Prompt for new commit message
-		fmt.Print("\nEnter commit message for the squashed commit: ")
-		commitMessage, err = readLine()
-		if err != nil {
-			return "", fmt.Errorf("failed to read commit message: %w", err)
+		var selectedCommit *exec.GitCommit
+		for _, c := range commits {
+			if c.Hash == selectedCommitHash || c.HashShort == selectedCommitHash {
+				selectedCommit = &c
+				break
+			}
+		}
+
+		if selectedCommit != nil {
+			fmt.Printf("Commit message [%s]: ", selectedCommit.Comment)
+			commitMessage = prompt.Input(
+				"",
+				func(d prompt.Document) []prompt.Suggest {
+					return []prompt.Suggest{}
+				},
+				prompt.OptionInitialBufferText(selectedCommit.Comment),
+			)
+
+			if commitMessage == "" {
+				commitMessage = selectedCommit.Comment
+			}
+		} else {
+			fmt.Print("Commit message: ")
+			scanner := bufio.NewScanner(os.Stdin)
+			if scanner.Scan() {
+				commitMessage = scanner.Text()
+			}
+			if err := scanner.Err(); err != nil {
+				return "", fmt.Errorf("failed to read commit message: %w", err)
+			}
 		}
 	}
 
