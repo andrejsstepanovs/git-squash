@@ -15,7 +15,7 @@ import (
 
 // MainHandler retrieves the current user absolute directory and prints it
 // Then calls GitLog to show last 20 commits
-func MainHandler(ctx context.Context, selectedCommit, commitMessage string) error {
+func MainHandler(ctx context.Context, selectedCommit, commitMessage string, max bool) error {
 	// Show current directory
 	dir, err := filepath.Abs(".")
 	if err != nil {
@@ -37,7 +37,7 @@ func MainHandler(ctx context.Context, selectedCommit, commitMessage string) erro
 	}
 
 	h := &handler{}
-	selectedCommit, err = h.handleCommitSelection(ctx, commits, selectedCommit)
+	selectedCommit, err = h.handleCommitSelection(ctx, commits, selectedCommit, max)
 	if err != nil {
 		return err
 	}

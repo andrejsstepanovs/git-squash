@@ -19,13 +19,18 @@ func NewCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			max, err := cmd.Flags().GetBool("max")
+			if err != nil {
+				return err
+			}
 
-			return handlers.MainHandler(cmd.Context(), hash, message)
+			return handlers.MainHandler(cmd.Context(), hash, message, max)
 		},
 	}
 
 	cmd.Flags().StringP("hash", "a", "", "Optional commit hash to squash from")
 	cmd.Flags().StringP("message", "m", "", "Optional commit message for the squashed commit")
+	cmd.Flags().BoolP("max", "", false, "Auto-select the oldest selectable commit")
 
 	return cmd
 }

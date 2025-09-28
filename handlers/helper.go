@@ -14,17 +14,23 @@ import (
 
 type handler struct{}
 
-func (h *handler) handleCommitSelection(ctx context.Context, commits []exec.GitCommit, selectedCommit string) (string, error) {
+func (h *handler) handleCommitSelection(ctx context.Context, commits []exec.GitCommit, selectedCommit string, max bool) (string, error) {
 	if selectedCommit == "" {
-		header := color.New(color.FgHiBlue, color.Bold).SprintFunc()
-		fmt.Printf("\n%s\n", header("Squashable commits:"))
+		if max {
+			if len(commits) > 0 {
+				selectedCommit = commits[len(commits)-1].Hash
+			}
+		} else {
+			header := color.New(color.FgHiBlue, color.Bold).SprintFunc()
+			fmt.Printf("\n%s\n", header("Squashable commits:"))
 
-		var err error
-		commit, err := selectCommit(ctx, commits)
-		if err != nil {
-			return "", fmt.Errorf("failed to select commit: %w", err)
+			var err error
+			commit, err := selectCommit(ctx, commits)
+			if err != nil {
+				return "", fmt.Errorf("failed to select commit: %w", err)
+			}
+			selectedCommit = commit.Hash
 		}
-		selectedCommit = commit.Hash
 	}
 
 	if selectedCommit == "" {
