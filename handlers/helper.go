@@ -78,13 +78,23 @@ func (h *handler) handleCommitMessage(commitMessage string, selectedCommitHash s
 		}
 
 		if selectedCommit != nil {
-			fmt.Printf("Commit message [%s]: ", selectedCommit.Comment)
+			livePrefix := fmt.Sprintf("Commit message [%s]: ", selectedCommit.Comment)
 			commitMessage = prompt.Input(
-				"",
+				livePrefix,
 				func(d prompt.Document) []prompt.Suggest {
 					return []prompt.Suggest{}
 				},
 				prompt.OptionInitialBufferText(selectedCommit.Comment),
+				prompt.OptionLivePrefix(func() (string, bool) {
+					return livePrefix, true
+				}),
+				prompt.OptionSetExitCheckerOnInput(func(in string, breakline bool) bool {
+					if breakline {
+						livePrefix = "Aborted! "
+						return true
+					}
+					return false
+				}),
 			)
 
 			if commitMessage == "" {
