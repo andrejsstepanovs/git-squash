@@ -3,14 +3,21 @@ package handlers
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/andrejsstepanovs/git-squash/exec"
 	"github.com/c-bata/go-prompt"
 	"github.com/fatih/color"
 )
+
+// ErrAbortedByUser is returned when the user aborts input (Ctrl+C or Ctrl+D)
+var ErrAbortedByUser = errors.New("aborted by user")
 
 type handler struct{}
 
@@ -77,37 +84,71 @@ func (h *handler) handleCommitMessage(commitMessage string, selectedCommitHash s
 			}
 		}
 
+		abort := func() (string, error) {
+			fmt.Fprintln(os.Stderr, "\nAborted by user.")
+			return "", ErrAbortedByUser
+		}
+
 		if selectedCommit != nil {
 			livePrefix := fmt.Sprintf("Commit message [%s]: ", selectedCommit.Comment)
-			commitMessage = prompt.Input(
-				livePrefix,
-				func(d prompt.Document) []prompt.Suggest {
-					return []prompt.Suggest{}
-				},
-				prompt.OptionInitialBufferText(selectedCommit.Comment),
-				prompt.OptionLivePrefix(func() (string, bool) {
-					return livePrefix, true
-				}),
-				prompt.OptionSetExitCheckerOnInput(func(in string, breakline bool) bool {
-					if breakline {
-						livePrefix = "Aborted! "
-						return true
-					}
-					return false
-				}),
-			)
+			// Set up signal handling for Ctrl+C
+			sigChan := make(chan os.Signal, 1)
+			signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+			defer signal.Stop(sigChan)
 
-			if commitMessage == "" {
-				commitMessage = selectedCommit.Comment
+			inputCh := make(chan string, 1)
+			errCh := make(chan error, 1)
+
+			go func() {
+				defer close(inputCh)
+				defer close(errCh)
+				defer func() {
+					if r := recover(); r != nil {
+						errCh <- ErrAbortedByUser
+					}
+				}()
+				msg := prompt.Input(
+					livePrefix,
+					func(d prompt.Document) []prompt.Suggest { return nil },
+					prompt.OptionInitialBufferText(selectedCommit.Comment),
+					prompt.OptionLivePrefix(func() (string, bool) { return livePrefix, true }),
+					prompt.OptionAddKeyBind(prompt.KeyBind{
+						Key: prompt.ControlC,
+						Fn: func(*prompt.Buffer) {
+							panic("abort")
+						},
+					}),
+					prompt.OptionAddKeyBind(prompt.KeyBind{
+						Key: prompt.ControlD,
+						Fn: func(*prompt.Buffer) {
+							panic("abort")
+						},
+					}),
+				)
+				inputCh <- msg
+			}()
+
+			select {
+			case <-sigChan:
+				return abort()
+			case msg := <-inputCh:
+				if msg == "" {
+					return abort()
+				}
+				commitMessage = msg
+			case <-errCh:
+				return abort()
 			}
 		} else {
 			fmt.Print("Commit message: ")
 			scanner := bufio.NewScanner(os.Stdin)
 			if scanner.Scan() {
 				commitMessage = scanner.Text()
-			}
-			if err := scanner.Err(); err != nil {
-				return "", fmt.Errorf("failed to read commit message: %w", err)
+			} else {
+				if err := scanner.Err(); err != nil && err != io.EOF {
+					return "", fmt.Errorf("failed to read commit message: %w", err)
+				}
+				return abort()
 			}
 		}
 	}
