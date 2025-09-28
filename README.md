@@ -30,6 +30,7 @@ git-squash -a <commit-hash> -m "New squashed commit message"
 
 * `-a, --hash` – Optional commit hash to squash from
 * `-m, --message` – Optional commit message for the squashed commit
+* `--max` – Auto-select the oldest selectable commit
 
 ## How it works
 
