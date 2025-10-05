@@ -5,9 +5,8 @@ BINARY=git-squash
 export GO111MODULE=on
 
 # Build the application
-build:
-	mkdir -p build
-	go build -o build/${BINARY} main.go
+build: clean
+	goreleaser build --single-target
 
 # Install the application
 install:
@@ -19,12 +18,16 @@ run:
 
 # Clean built files
 clean:
+	rm -rf dist
 	go clean
 	rm -rf build
 
 # Run tests
 test:
 	go test -v ./...
+
+release: clean
+	goreleaser release --rm-dist
 
 # Build for different platforms
 build-all: clean
