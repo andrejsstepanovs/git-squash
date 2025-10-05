@@ -1,2 +1,4 @@
 .aider*
 build/
+# Added by goreleaser init:
+dist/

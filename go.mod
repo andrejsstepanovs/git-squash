@@ -3,6 +3,7 @@ module github.com/andrejsstepanovs/git-squash
 go 1.24.2
 
 require (
+	github.com/c-bata/go-prompt v0.2.6
 	github.com/eiannone/keyboard v0.0.0-20220611211555-0d226195f203
 	github.com/fatih/color v1.13.0
 	github.com/spf13/cobra v1.9.1
@@ -10,7 +11,6 @@ require (
 )
 
 require (
-	github.com/c-bata/go-prompt v0.2.6 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
