@@ -6,7 +6,7 @@ export GO111MODULE=on
 
 # Build the application
 build: clean
-	goreleaser build --single-target
+	goreleaser release --snapshot --clean
 
 # Install the application
 install:
@@ -20,20 +20,14 @@ run:
 clean:
 	rm -rf dist
 	go clean
-	rm -rf build
 
 # Run tests
 test:
 	go test -v ./...
 
 release: clean
-	goreleaser release --rm-dist
+	git tag -a v$(shell grep 'const Version' version.go | awk '{print $$4}' | tr -d '"') -m "Release v$(shell grep 'const Version' version.go | awk '{print $$4}' | tr -d '"')"
+	git push --tags
+	goreleaser release
 
-# Build for different platforms
-build-all: clean
-	mkdir -p build
-	GOOS=linux GOARCH=amd64 go build -o build/${BINARY}-linux-amd64 main.go
-	GOOS=darwin GOARCH=amd64 go build -o build/${BINARY}-darwin-amd64 main.go
-	GOOS=windows GOARCH=amd64 go build -o build/${BINARY}-windows-amd64.exe main.go
-
-.PHONY: build install run clean test build-all
+.PHONY: build install run clean test
